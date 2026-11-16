@@ -1,0 +1,38 @@
+# Build and dependency files
+bin/
+obj/
+.vs/
+.vscode/
+
+# Version control
+.git/
+.gitignore
+
+# IDE and editor files
+*.user
+*.ide
+.idea/
+.DS_Store
+
+# User storage and temporary files
+StorageFiles/
+temp/
+tmp/
+
+# Environment and config files (dev only)
+appsettings.Development.json
+appsettings.Staging.json
+.env.local
+.env.development
+
+# Node modules (if any frontend build artifacts)
+node_modules/
+
+# Test and coverage files
+TestResults/
+coverage/
+*.trx
+
+# Build output artifacts
+*.nupkg
+*.snupkg

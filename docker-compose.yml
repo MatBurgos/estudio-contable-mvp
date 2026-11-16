@@ -1,0 +1,80 @@
+services:
+  # ============================================================================
+  # 1. Base de Datos: PostgreSQL 16
+  # ============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: estudio_contable_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-estudio_contable_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta definir DB_PASSWORD en .env}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/EstudioContable.Infrastructure/Database/init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-estudio_contable_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - estudio-network
+
+  # ============================================================================
+  # 2. Backend: .NET 8 WebApi
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: estudio_contable_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-5000}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${DB_NAME:-estudio_contable_db};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:?Falta definir DB_PASSWORD en .env}"
+      Jwt__Secret: ${JWT_SECRET:?Falta definir JWT_SECRET en .env}
+      Jwt__Issuer: EstudioContableApi
+      Jwt__Audience: EstudioContableClient
+      Storage__BasePath: /app/storage
+      Cors__AllowedOrigins__0: "http://localhost:${FRONTEND_PORT:-3000}"
+      Cors__AllowedOrigins__1: "http://localhost:5173"
+      Cors__AllowedOrigins__2: "http://frontend"
+    volumes:
+      - backend_storage:/app/storage
+    networks:
+      - estudio-network
+
+  # ============================================================================
+  # 3. Frontend: React + Vite + Nginx
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: estudio_contable_web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - estudio-network
+
+volumes:
+  postgres_data:
+    name: estudio_contable_pgdata
+  backend_storage:
+    name: estudio_contable_storage
+
+networks:
+  estudio-network:
+    name: estudio_contable_network
+    driver: bridge

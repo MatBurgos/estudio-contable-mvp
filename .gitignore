@@ -1,0 +1,33 @@
+# Variables de entorno y secretos locales
+.env
+.env.local
+.env.*.local
+appsettings.Development.json
+appsettings.Production.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+backend/src/EstudioContable.WebApi/StorageFiles/
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Logs y temporales
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs y SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
